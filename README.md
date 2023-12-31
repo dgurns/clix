@@ -1,3 +1,3 @@
 # CLIX
 
-An LLM-powered CLI agent built with Deno.
+An LLM-powered CLI agent built with Go.
