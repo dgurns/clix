@@ -1,6 +1,8 @@
 import { systemMessage, userPrompt } from './utils.ts';
 import { OpenAI } from './lib/llm/openai.ts';
 
+console.log('');
+
 systemMessage(`Welcome to Clix! I can help you run commands on your computer. What would you like to do?
 For example, "Reorganize my desktop" or "Initialize a new git repository"`);
 
