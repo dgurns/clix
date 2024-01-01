@@ -1,9 +1,10 @@
 package session
 
 import (
-	"bufio"
 	"fmt"
-	"os"
+
+	"github.com/dgurns/clix/internal/cli"
+	"github.com/dgurns/clix/internal/llm"
 )
 
 type Role string
@@ -20,27 +21,27 @@ type Message struct {
 }
 
 type Session struct {
+	LLM      *llm.LLM
 	Messages []*Message
 }
 
-func promptUser() (string, error) {
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("> ")
-	s, err := reader.ReadString('\n')
-	if err != nil {
-		return "", err
+func New(llm *llm.LLM) (*Session, error) {
+	if llm == nil {
+		return nil, fmt.Errorf("no LLM passed to session")
 	}
-	fmt.Println()
-	return s[:len(s)-1], nil
+	return &Session{
+		LLM:      llm,
+		Messages: []*Message{},
+	}, nil
 }
 
 func (s *Session) Advance(msg *Message) error {
 	s.Messages = append(s.Messages, msg)
 	switch msg.Role {
 	case RoleSystem:
-		fmt.Printf("🤖 %s\n\n", msg.Content)
+		cli.WriteSystemMessage(msg.Content)
 
-		u, err := promptUser()
+		u, err := cli.GetUserInput()
 		if err != nil {
 			return err
 		}
