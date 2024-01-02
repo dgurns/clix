@@ -46,14 +46,14 @@ func Init() (*Config, error) {
 		}
 	}
 
-	cli.WriteSystemMessage("Please enter your OpenAI API key")
+	cli.WriteAssistantMessage("Please enter your OpenAI API key")
 
 	openAiAPIKey, err := cli.GetUserInput()
 	if err != nil {
 		return nil, err
 	}
 
-	cli.WriteSystemMessage("Saving OpenAI API key locally to ~/.clix/.env")
+	cli.WriteAssistantMessage("Saving OpenAI API key locally to ~/.clix/.env")
 
 	f, err := os.OpenFile(envFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -66,7 +66,7 @@ func Init() (*Config, error) {
 		return nil, err
 	}
 
-	cli.WriteSystemMessage("OpenAI API key saved")
+	cli.WriteAssistantMessage("OpenAI API key saved")
 
 	return &Config{
 		OpenAiAPIKey: openAiAPIKey,

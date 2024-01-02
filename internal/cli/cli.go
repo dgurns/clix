@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-func WriteSystemMessage(msg string) {
+func WriteAssistantMessage(msg string) {
 	fmt.Printf("🤖 %s\n\n", msg)
 	return
 }

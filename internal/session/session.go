@@ -1,6 +1,7 @@
 package session
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/dgurns/clix/internal/cli"
@@ -27,7 +28,74 @@ func (s *Session) Advance(msg *llm.Message) error {
 
 	switch msg.Role {
 	case llm.RoleSystem:
-		cli.WriteSystemMessage(msg.Content)
+		if err := s.Advance(&llm.Message{
+			Role: llm.RoleAssistant,
+			Content: `Welcome to Clix! I can help you run commands on your computer. What would you like to do? 
+For example, "Reorganize my desktop" or "Initialize a new git repository"`,
+		}); err != nil {
+			return err
+		}
+
+	case llm.RoleAssistant:
+		if len(msg.ToolCalls) > 0 {
+			args := map[string]string{}
+			err := json.Unmarshal([]byte(msg.ToolCalls[0].Function.Arguments), &args)
+			if err != nil {
+				return err
+			}
+
+			cmd, ok := args["command"]
+			if !ok {
+				return fmt.Errorf("no command provided by tool")
+			}
+			rationale, ok := args["rationale"]
+			if !ok {
+				return fmt.Errorf("no rationale provided by tool")
+			}
+
+			cli.WriteAssistantMessage(fmt.Sprintf(
+				"%s\n\nI suggest you run: %s\n\nWant to run it? (y)es / (n)o",
+				rationale,
+				cmd,
+			))
+
+			u, err := cli.GetUserInput()
+			if err != nil {
+				return err
+			}
+			if u != "y" {
+				if err := s.Advance(&llm.Message{
+					Role:       llm.RoleTool,
+					Name:       llm.FunctionNameRunTerminalCommand,
+					ToolCallID: msg.ToolCalls[0].ID,
+					Content:    "User chose not to call this function",
+				}); err != nil {
+					return err
+				}
+			}
+
+			cli.WriteAssistantMessage(fmt.Sprintf("Running command: %s", cmd))
+
+			// TODO: run the commmand
+
+			mockOutput := "Desktop\nDownloads\nDocuments"
+
+			fmt.Printf("Output:\n\n%s\n\n", mockOutput)
+
+			if err = s.Advance(&llm.Message{
+				Role:       llm.RoleTool,
+				Name:       llm.FunctionNameRunTerminalCommand,
+				Content:    mockOutput,
+				ToolCallID: msg.ToolCalls[0].ID,
+			}); err != nil {
+				return err
+			}
+		}
+
+		// the assistant isn't trying to run any tool calls, so handle it like
+		// a normal assistant message
+
+		cli.WriteAssistantMessage(msg.Content)
 
 		u, err := cli.GetUserInput()
 		if err != nil {
@@ -37,50 +105,35 @@ func (s *Session) Advance(msg *llm.Message) error {
 			return fmt.Errorf("no user input")
 		}
 
-		err = s.Advance(&llm.Message{
+		if err = s.Advance(&llm.Message{
 			Role:    llm.RoleUser,
 			Content: u,
-		})
-		if err != nil {
+		}); err != nil {
 			return err
 		}
+
 	case llm.RoleUser:
-		cli.WriteSystemMessage("Querying LLM...")
+		cli.WriteAssistantMessage("Querying LLM...")
 
 		c, err := s.LLM.CreateChatCompletion(s.Messages)
 		if err != nil {
 			return err
 		}
-
-		cli.WriteSystemMessage(fmt.Sprintf("I suggest you run: %s", c.Content))
-
-		cli.WriteSystemMessage("Want to run it? (y)es / (n)o")
-
-		u, err := cli.GetUserInput()
-		if err != nil {
+		if err = s.Advance(c); err != nil {
 			return err
 		}
-		if u != "y" {
-			s.Advance(&llm.Message{
-				Role:    llm.RoleSystem,
-				Content: "Okay, what would you like to do instead?",
-			})
-		}
 
-		err = s.Advance(&llm.Message{
-			Role:    llm.RoleTool,
-			Content: c.Content,
-		})
-		if err != nil {
-			return err
-		}
 	case llm.RoleTool:
-		cli.WriteSystemMessage(fmt.Sprintf("Running command: %s", msg.Content))
+		cli.WriteAssistantMessage("Sending output to LLM...")
 
-		// TODO: run the commmand
-
-		fmt.Print("Output:\n\nDesktop\nDownloads\nDocuments\n\n")
-		// TODO: Call Advance with RoleSystem and see if user wants anything else
+		c, err := s.LLM.CreateChatCompletion(s.Messages)
+		if err != nil {
+			return err
+		}
+		if err = s.Advance(c); err != nil {
+			return err
+		}
 	}
+
 	return nil
 }
