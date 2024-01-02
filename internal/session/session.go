@@ -3,6 +3,7 @@ package session
 import (
 	"encoding/json"
 	"fmt"
+	"os/exec"
 
 	"github.com/dgurns/clix/internal/cli"
 	"github.com/dgurns/clix/internal/llm"
@@ -38,6 +39,7 @@ For example, "Reorganize my desktop" or "Initialize a new git repository"`,
 
 	case llm.RoleAssistant:
 		if len(msg.ToolCalls) > 0 {
+			// for now, just run the first tool call
 			args := map[string]string{}
 			err := json.Unmarshal([]byte(msg.ToolCalls[0].Function.Arguments), &args)
 			if err != nil {
@@ -54,9 +56,10 @@ For example, "Reorganize my desktop" or "Initialize a new git repository"`,
 			}
 
 			cli.WriteAssistantMessage(fmt.Sprintf(
-				"%s\n\nI suggest you run: %s\n\nWant to run it? (y)es / (n)o",
+				"%s\n\nI suggest you run: %s\n\n%s",
 				rationale,
-				cmd,
+				cli.Yellow(cmd),
+				cli.Red("Want to run it? (y)es / (n)o"),
 			))
 
 			u, err := cli.GetUserInput()
@@ -76,16 +79,18 @@ For example, "Reorganize my desktop" or "Initialize a new git repository"`,
 
 			cli.WriteAssistantMessage(fmt.Sprintf("Running command: %s", cmd))
 
-			// TODO: run the commmand
+			e := exec.Command("bash", "-c", cmd)
+			out, err := e.CombinedOutput()
+			if err != nil {
+				return fmt.Errorf("failed to run command: %w", err)
+			}
 
-			mockOutput := "Desktop\nDownloads\nDocuments"
-
-			fmt.Printf("Output:\n\n%s\n\n", mockOutput)
+			cli.WriteAssistantMessage(fmt.Sprintf("Output:\n\n%s", string(out)))
 
 			if err = s.Advance(&llm.Message{
 				Role:       llm.RoleTool,
 				Name:       llm.FunctionNameRunTerminalCommand,
-				Content:    mockOutput,
+				Content:    string(out),
 				ToolCallID: msg.ToolCalls[0].ID,
 			}); err != nil {
 				return err
@@ -103,6 +108,15 @@ For example, "Reorganize my desktop" or "Initialize a new git repository"`,
 		}
 		if u == "" {
 			return fmt.Errorf("no user input")
+		} else if u == "clear" {
+			// keep the system message but clear everything else
+			s.Messages = []*llm.Message{s.Messages[0]}
+			if err = s.Advance(&llm.Message{
+				Role:    llm.RoleAssistant,
+				Content: "Ok, let's start again. How can I help you?",
+			}); err != nil {
+				return err
+			}
 		}
 
 		if err = s.Advance(&llm.Message{
