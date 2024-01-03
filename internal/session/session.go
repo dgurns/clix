@@ -110,34 +110,34 @@ For example, "Reorganize my desktop" or "Initialize a new git repository"`,
 			if err := s.ProposeAndRunCommand(&msg.ToolCalls[0]); err != nil {
 				return err
 			}
-		}
-		// the assistant isn't trying to run any tool calls, so handle it like
-		// a normal assistant message
+		} else {
+			// the assistant isn't trying to run any tool calls, so handle it like
+			// a normal assistant message
+			cli.WriteAssistantMessage(msg.Content)
 
-		cli.WriteAssistantMessage(msg.Content)
+			u, err := cli.GetUserInput()
+			if err != nil {
+				return err
+			}
+			if u == "" {
+				return fmt.Errorf("no user input")
+			} else if u == "clear" {
+				// keep the system message but clear everything else
+				s.Messages = []*llm.Message{s.Messages[0]}
+				if err = s.Advance(&llm.Message{
+					Role:    llm.RoleAssistant,
+					Content: "Ok, let's start again. How can I help you?",
+				}); err != nil {
+					return err
+				}
+			}
 
-		u, err := cli.GetUserInput()
-		if err != nil {
-			return err
-		}
-		if u == "" {
-			return fmt.Errorf("no user input")
-		} else if u == "clear" {
-			// keep the system message but clear everything else
-			s.Messages = []*llm.Message{s.Messages[0]}
 			if err = s.Advance(&llm.Message{
-				Role:    llm.RoleAssistant,
-				Content: "Ok, let's start again. How can I help you?",
+				Role:    llm.RoleUser,
+				Content: u,
 			}); err != nil {
 				return err
 			}
-		}
-
-		if err = s.Advance(&llm.Message{
-			Role:    llm.RoleUser,
-			Content: u,
-		}); err != nil {
-			return err
 		}
 
 	case llm.RoleUser:
