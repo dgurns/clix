@@ -8,12 +8,14 @@ import (
 	"github.com/sashabaranov/go-openai/jsonschema"
 )
 
+// OpenAiLLM is an LLM that uses the OpenAI API
 type OpenAiLLM struct {
 	client *openai.Client
 }
 
 var _ LLM = OpenAiLLM{}
 
+// NewOpenAi initializes a new OpenAI LLM client
 func NewOpenAi(apiKey string) (*OpenAiLLM, error) {
 	c := openai.NewClient(apiKey)
 	return &OpenAiLLM{
@@ -112,6 +114,7 @@ var tools = []openai.Tool{
 	},
 }
 
+// CreateChatCompletion calls the OpenAI API and returns the chat completion
 func (l OpenAiLLM) CreateChatCompletion(msgs []*Message) (*Message, error) {
 	resp, err := l.client.CreateChatCompletion(
 		context.Background(),

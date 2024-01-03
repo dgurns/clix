@@ -1,3 +1,4 @@
+// Package config is used to configure the app
 package config
 
 import (
@@ -8,6 +9,7 @@ import (
 	"github.com/dgurns/clix/internal/cli"
 )
 
+// Config provides configuration for the app
 type Config struct {
 	OpenAiAPIKey string
 }
