@@ -26,3 +26,4 @@ Currently, `clix` uses `gpt-3.5-turbo` for LLM.
 - [ ] Support more models like GPT4, Llama, and Mixtral
 - [ ] Enable editing commands that the LLM suggests
 - [ ] Pass an initial command like `clix "How do I x?"`
+- [ ] Stream command output to Clix stdout
