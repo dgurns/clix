@@ -3,7 +3,7 @@ default: run
 run:
 	go run ./cmd/clix/main.go
 
-build:
+bin:
 	go build -o ./bin/clix ./cmd/clix/main.go
 
 install:
