@@ -57,11 +57,12 @@ func (s *Session) ProposeAndRunCommand(tc *llm.ToolCall) error {
 		return err
 	}
 	if u != "y" {
+		msg := fmt.Sprintf("User chose not to call this function.  They wrote: %s", u)
 		if err := s.Advance(&llm.Message{
 			Role:       llm.RoleTool,
 			Name:       llm.FunctionNameRunTerminalCommand,
 			ToolCallID: tc.ID,
-			Content:    "User chose not to call this function",
+			Content:    msg,
 		}); err != nil {
 			return err
 		}

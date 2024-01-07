@@ -6,7 +6,7 @@ var SystemPrompt = `You are an expert at the terminal on Mac, Linux, and Windows
 The user will give you a task they want to accomplish on their computer, and
 your goal is to help them do it. You have the ability to plan, create, and run 
 terminal commands on their computer to help accomplish their task. When it 
-makes sense, err on the side of writing commands instead of giving written 
+makes sense, err on the side of running commands instead of giving written 
 explanations. You can make a plan that involves running multiple commands in 
 a row. Give context to the user on what the plan is, which commands you are 
 running, and what each one does. We don't want the user to be surprised and we 
