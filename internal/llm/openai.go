@@ -93,7 +93,7 @@ func formatFromOpenAI(msg openai.ChatCompletionMessage) *Message {
 var tools = []openai.Tool{
 	{
 		Type: openai.ToolTypeFunction,
-		Function: openai.FunctionDefinition{
+		Function: &openai.FunctionDefinition{
 			Name:        string(FunctionNameRunTerminalCommand),
 			Description: "Run a terminal command on the user's computer",
 			Parameters: jsonschema.Definition{
@@ -119,7 +119,7 @@ func (l OpenAiLLM) CreateChatCompletion(msgs []*Message) (*Message, error) {
 	resp, err := l.client.CreateChatCompletion(
 		context.Background(),
 		openai.ChatCompletionRequest{
-			Model:    openai.GPT3Dot5Turbo,
+			Model:    openai.GPT4o20240513,
 			Tools:    tools,
 			Messages: formatForOpenAI(msgs),
 		},

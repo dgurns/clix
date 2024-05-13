@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/fatih/color v1.16.0
-	github.com/sashabaranov/go-openai v1.17.9
+	github.com/sashabaranov/go-openai v1.24.0
 )
 
 require (
