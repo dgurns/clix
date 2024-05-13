@@ -19,11 +19,11 @@ After cloning the repo to your computer, run `make install`. This will build the
 
 In your terminal, simply run `clix`. You'll be prompted to enter your OpenAI API key. Then you can start asking `clix` to help you with tasks on your computer.
 
-Currently, `clix` uses `gpt-3.5-turbo` for LLM.
+Currently, `clix` uses `gpt-4o` for LLM.
 
 ## Roadmap
 
-- [ ] Support more models like GPT4, Llama, and Mixtral
+- [ ] Support more models like Claude and Llama
 - [ ] Enable editing commands that the LLM suggests
 - [ ] Pass an initial command like `clix "How do I x?"`
 - [ ] Stream command output to Clix stdout
