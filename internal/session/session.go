@@ -95,10 +95,13 @@ func (s *Session) Advance(msg *llm.Message) error {
 
 	switch msg.Role {
 	case llm.RoleSystem:
+		intro := `Welcome to Clix! I can help you run commands on your computer. What would you like to do? 
+For example, "Reorganize my desktop" or "Initialize a new git repository"`
+		cli.WriteAssistantMessage(intro)
+
 		if err := s.Advance(&llm.Message{
-			Role: llm.RoleAssistant,
-			Content: `Welcome to Clix! I can help you run commands on your computer. What would you like to do? 
-For example, "Reorganize my desktop" or "Initialize a new git repository"`,
+			Role:    llm.RoleAssistant,
+			Content: intro,
 		}); err != nil {
 			return err
 		}
@@ -111,9 +114,8 @@ For example, "Reorganize my desktop" or "Initialize a new git repository"`,
 				return err
 			}
 		} else {
-			// the assistant isn't trying to run any tool calls, so handle it like
-			// a normal assistant message
-			cli.WriteAssistantMessage(msg.Content)
+			// no tool calls, so prompt the user for input
+			fmt.Print("\n")
 
 			u, err := cli.GetUserInput()
 			if err != nil {
@@ -143,18 +145,19 @@ For example, "Reorganize my desktop" or "Initialize a new git repository"`,
 	case llm.RoleUser:
 		cli.WriteAssistantMessage("Querying LLM...")
 
-		c, err := s.LLM.CreateChatCompletion(s.Messages)
+		msg, err := s.LLM.CreateStreamingChatCompletion(s.Messages)
 		if err != nil {
 			return err
 		}
-		if err = s.Advance(c); err != nil {
+
+		if err = s.Advance(msg); err != nil {
 			return err
 		}
 
 	case llm.RoleTool:
 		cli.WriteAssistantMessage("Sending output to LLM...")
 
-		c, err := s.LLM.CreateChatCompletion(s.Messages)
+		c, err := s.LLM.CreateStreamingChatCompletion(s.Messages)
 		if err != nil {
 			return err
 		}

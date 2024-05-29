@@ -2,7 +2,9 @@ package llm
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 
 	openai "github.com/sashabaranov/go-openai"
 	"github.com/sashabaranov/go-openai/jsonschema"
@@ -14,6 +16,9 @@ type OpenAiLLM struct {
 }
 
 var _ LLM = OpenAiLLM{}
+
+// GPT4o is an alias to the latest GPT-4o model ID
+var GPT4o = openai.GPT4o20240513
 
 // NewOpenAi initializes a new OpenAI LLM client
 func NewOpenAi(apiKey string) (*OpenAiLLM, error) {
@@ -119,7 +124,7 @@ func (l OpenAiLLM) CreateChatCompletion(msgs []*Message) (*Message, error) {
 	resp, err := l.client.CreateChatCompletion(
 		context.Background(),
 		openai.ChatCompletionRequest{
-			Model:    openai.GPT4o20240513,
+			Model:    GPT4o,
 			Tools:    tools,
 			Messages: formatForOpenAI(msgs),
 		},
@@ -134,4 +139,77 @@ func (l OpenAiLLM) CreateChatCompletion(msgs []*Message) (*Message, error) {
 
 	msg := formatFromOpenAI(resp.Choices[0].Message)
 	return msg, nil
+}
+
+// CreateStreamingChatCompletion calls the OpenAI API and returns a channel of
+// streaming chat completion deltas
+func (l OpenAiLLM) CreateStreamingChatCompletion(msgs []*Message) (*Message, error) {
+	stream, err := l.client.CreateChatCompletionStream(
+		context.Background(),
+		openai.ChatCompletionRequest{
+			Model:    GPT4o,
+			Tools:    tools,
+			Messages: formatForOpenAI(msgs),
+			Stream:   true,
+		},
+	)
+	if err != nil {
+		fmt.Printf("OpenAI CreateStreamingChatCompletion error: %v\n", err)
+		return nil, err
+	}
+	defer stream.Close()
+
+	msgText := ""
+	toolID := ""
+	toolName := ""
+	toolArgs := ""
+
+	for {
+		response, err := stream.Recv()
+		if errors.Is(err, io.EOF) {
+			fmt.Print("\n")
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		if response.Choices[0].FinishReason == openai.FinishReasonStop {
+			fmt.Print("\n")
+			break
+		}
+		delta := response.Choices[0].Delta
+		if delta.ToolCalls != nil {
+			// only use the first tool call to keep things simple
+			tc := delta.ToolCalls[0]
+			if tc.ID != "" {
+				toolID = tc.ID
+			}
+			if tc.Function.Name != "" {
+				toolName = string(tc.Function.Name)
+			}
+			if tc.Function.Arguments != "" {
+				toolArgs += tc.Function.Arguments
+			}
+		}
+		fmt.Printf(delta.Content)
+		msgText += delta.Content
+	}
+
+	if toolID != "" {
+		return &Message{
+			Role: RoleAssistant,
+			ToolCalls: []ToolCall{
+				{
+					ID:       toolID,
+					Type:     ToolTypeFunction,
+					Function: FunctionCall{Name: FunctionName(toolName), Arguments: toolArgs},
+				},
+			},
+		}, nil
+	}
+
+	return &Message{
+		Role:    RoleAssistant,
+		Content: msgText,
+	}, nil
 }
