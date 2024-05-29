@@ -21,6 +21,10 @@ In your terminal, simply run `clix`. You'll be prompted to enter your OpenAI API
 
 Currently, `clix` uses `gpt-4o` for LLM.
 
+## Reset
+
+If you want to clear the current API key and remove the `clix` binary, run `make reset`.
+
 ## Roadmap
 
 - [ ] Support more models like Claude and Llama
