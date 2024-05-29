@@ -141,9 +141,10 @@ func (l OpenAiLLM) CreateChatCompletion(msgs []*Message) (*Message, error) {
 	return msg, nil
 }
 
-// CreateStreamingChatCompletion calls the OpenAI API and returns a channel of
-// streaming chat completion deltas
-func (l OpenAiLLM) CreateStreamingChatCompletion(msgs []*Message) (*Message, error) {
+// CreateChatCompletionWithStreaming calls the OpenAI API and prints the
+// completion chunks as they come in. It returns the final completion as a
+// single message.
+func (l OpenAiLLM) CreateChatCompletionWithStreaming(msgs []*Message) (*Message, error) {
 	stream, err := l.client.CreateChatCompletionStream(
 		context.Background(),
 		openai.ChatCompletionRequest{
@@ -154,7 +155,7 @@ func (l OpenAiLLM) CreateStreamingChatCompletion(msgs []*Message) (*Message, err
 		},
 	)
 	if err != nil {
-		fmt.Printf("OpenAI CreateStreamingChatCompletion error: %v\n", err)
+		fmt.Printf("OpenAI CreateChatCompletionWithStreaming error: %v\n", err)
 		return nil, err
 	}
 	defer stream.Close()

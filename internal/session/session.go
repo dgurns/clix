@@ -145,7 +145,7 @@ For example, "Reorganize my desktop" or "Initialize a new git repository"`
 	case llm.RoleUser:
 		cli.WriteAssistantMessage("Querying LLM...")
 
-		msg, err := s.LLM.CreateStreamingChatCompletion(s.Messages)
+		msg, err := s.LLM.CreateChatCompletionWithStreaming(s.Messages)
 		if err != nil {
 			return err
 		}
@@ -157,7 +157,7 @@ For example, "Reorganize my desktop" or "Initialize a new git repository"`
 	case llm.RoleTool:
 		cli.WriteAssistantMessage("Sending output to LLM...")
 
-		c, err := s.LLM.CreateStreamingChatCompletion(s.Messages)
+		c, err := s.LLM.CreateChatCompletionWithStreaming(s.Messages)
 		if err != nil {
 			return err
 		}

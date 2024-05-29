@@ -73,5 +73,5 @@ type Message struct {
 // LLM is an interface layer on top of LLMs like GPT3.5, Claude, etc.
 type LLM interface {
 	CreateChatCompletion(msgs []*Message) (*Message, error)
-	CreateStreamingChatCompletion(msgs []*Message) (*Message, error)
+	CreateChatCompletionWithStreaming(msgs []*Message) (*Message, error)
 }
