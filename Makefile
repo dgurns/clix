@@ -8,3 +8,7 @@ bin:
 
 install:
 	go install ./cmd/clix
+
+reset:
+	-rm ~/.clix/.env
+	-rm ./bin/clix
